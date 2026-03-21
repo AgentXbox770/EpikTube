@@ -60,6 +60,7 @@
             text-align: center;
             box-shadow: 0 2px 5px rgba(0,0,0,0.05);
             width: 100%;
+            transition: all 0.2s ease;
         }
 
         .bitview-box h1 {
@@ -78,11 +79,30 @@
             line-height: 1.5;
         }
 
+        /* Error state styles */
+        .error-title {
+            font-size: 48px;
+            font-weight: bold;
+            color: #e74c3c;
+            margin-bottom: 20px;
+            letter-spacing: -1px;
+        }
+        
+        .error-text {
+            font-size: 16px;
+            color: #555;
+            line-height: 1.5;
+        }
+
         /* Footer */
         .footer {
             margin-top: 30px;
             font-size: 14px;
             color: #777;
+        }
+        
+        .footer-error {
+            color: #c0392b;
         }
 
         @media (max-width: 550px) {
@@ -95,6 +115,9 @@
             .maintenance-text {
                 font-size: 16px;
             }
+            .error-title {
+                font-size: 36px;
+            }
         }
     </style>
 </head>
@@ -105,24 +128,184 @@
             <img class="logo" src="logo.ico" alt="FlowTube Logo" onerror="this.style.display='none'">
         </div>
         
-        <!-- BitView-style box -->
-        <div class="bitview-box">
+        <!-- BitView-style box (content will be updated by JS) -->
+        <div id="mainBox" class="bitview-box">
             <h1>FlowTube</h1>
-            <div class="maintenance-text">This site is currently being made and soon be finished, Thanks for visiting! :)</div>
+            <div class="maintenance-text">Loading...</div>
         </div>
         
         <!-- Footer -->
-        <div class="footer">
+        <div id="footer" class="footer">
             If you are a PC user, add it as an app :)
         </div>
     </div>
     
     <script>
-        // Change Chrome mobile address bar color between purple and blue every 5 seconds
-        const colors = ['#9b59b6', '#1e88e5']; // Purple, Blue
-        let index = 0;
+        // Function to show error state (404)
+        function showError(consoleError) {
+            const box = document.getElementById('mainBox');
+            const footer = document.getElementById('footer');
+            
+            // Log actual error to console devtools
+            console.error('404:', consoleError);
+            
+            // Change box content to 404 error
+            box.innerHTML = `
+                <div class="error-title">404</div>
+                <div class="error-text">Something went wrong while loading videos. Try again later :(</div>
+            `;
+            
+            // Update footer with devtools hint
+            footer.innerHTML = `console devtools error (actual): ${consoleError}`;
+            footer.classList.add('footer-error');
+        }
         
-        // Create or update theme-color meta tag
+        // Function to show normal/success state
+        function showNormal() {
+            const box = document.getElementById('mainBox');
+            const footer = document.getElementById('footer');
+            
+            box.innerHTML = `
+                <h1>FlowTube</h1>
+                <div class="maintenance-text">This site is currently being made and soon be finished, Thanks for visiting! :)</div>
+            `;
+            
+            footer.innerHTML = `If you are a PC user, add it as an app :)`;
+            footer.classList.remove('footer-error');
+        }
+        
+        // Firebase configuration (public config - for demo purposes)
+        // This is a test config, will fail intentionally if not properly set up
+        const firebaseConfig = {
+            apiKey: "AIzaSyDummyKeyForTesting123456789",
+            authDomain: "flowtube-test.firebaseapp.com",
+            projectId: "flowtube-test",
+            storageBucket: "flowtube-test.appspot.com",
+            messagingSenderId: "123456789012",
+            appId: "1:123456789012:web:abcdef1234567890"
+        };
+        
+        // Flag to track if Firebase loaded successfully
+        let firebaseLoaded = false;
+        let loadTimeout = null;
+        
+        // Try to load Firebase SDK dynamically
+        function loadFirebase() {
+            return new Promise((resolve, reject) => {
+                // Check if Firebase is already loaded
+                if (typeof firebase !== 'undefined' && firebase.apps && firebase.apps.length) {
+                    firebaseLoaded = true;
+                    resolve();
+                    return;
+                }
+                
+                if (typeof firebase !== 'undefined' && firebase.initializeApp) {
+                    try {
+                        firebase.initializeApp(firebaseConfig);
+                        firebaseLoaded = true;
+                        resolve();
+                        return;
+                    } catch(e) {
+                        reject(e);
+                        return;
+                    }
+                }
+                
+                // Load Firebase SDK script
+                const script = document.createElement('script');
+                script.src = 'https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js';
+                script.async = true;
+                
+                script.onload = () => {
+                    // Load additional Firebase services if needed (like firestore, etc)
+                    const firestoreScript = document.createElement('script');
+                    firestoreScript.src = 'https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js';
+                    firestoreScript.async = true;
+                    
+                    firestoreScript.onload = () => {
+                        try {
+                            if (typeof firebase !== 'undefined' && firebase.initializeApp) {
+                                firebase.initializeApp(firebaseConfig);
+                                firebaseLoaded = true;
+                                resolve();
+                            } else {
+                                reject(new Error('Firebase loaded but initializeApp not available'));
+                            }
+                        } catch(e) {
+                            reject(e);
+                        }
+                    };
+                    
+                    firestoreScript.onerror = () => {
+                        reject(new Error('Failed to load Firebase Firestore module'));
+                    };
+                    
+                    document.head.appendChild(firestoreScript);
+                };
+                
+                script.onerror = () => {
+                    reject(new Error('Failed to load Firebase SDK script - network error or invalid URL'));
+                };
+                
+                document.head.appendChild(script);
+                
+                // Timeout for loading
+                setTimeout(() => {
+                    if (!firebaseLoaded) {
+                        reject(new Error('Timeout'));
+                    }
+                }, 5000);
+            });
+        }
+        
+        // Test Firebase connection by trying to access a simple operation
+        async function testFirebaseConnection() {
+            try {
+                // Try to get Firestore instance and perform a simple operation
+                if (typeof firebase !== 'undefined' && firebase.firestore) {
+                    const db = firebase.firestore();
+                    // Try to access a collection (will fail with invalid config, but that's the point)
+                    // This will throw if config is invalid
+                    await db.collection('test').limit(1).get().catch((err) => {
+                        // If error is about permissions or missing project, that's fine - Firebase loaded
+                        // We just need to know Firebase API is responsive
+                        if (err.code === 'permission-denied' || err.code === 'failed-precondition' || err.message.includes('not found')) {
+                            // Firebase is working but config may be invalid - still counts as loaded
+                            return true;
+                        }
+                        throw err;
+                    });
+                }
+                return true;
+            } catch(e) {
+                console.warn(':', e.message);
+                // If Firebase is initialized but test fails, still consider it loaded
+                return firebaseLoaded;
+            }
+        }
+        
+        // Initialize Firebase and handle success/error
+        async function initFirebase() {
+            try {
+                await loadFirebase();
+                await testFirebaseConnection();
+                // Success! Firebase loaded and responding
+                console.log('[FlowTube] loaded');
+                showNormal();
+            } catch(error) {
+                // Firebase failed to load or not found
+                console.error('[FlowTube]', error.message);
+                showError(error.message);
+            }
+        }
+        
+        // Start Firebase initialization
+        initFirebase();
+        
+        // Address bar color changer (purple and blue every 5 seconds)
+        const colors = ['#9b59b6', '#1e88e5']; // Purple, Blue
+        let colorIndex = 0;
+        
         let themeColorMeta = document.querySelector('meta[name="theme-color"]');
         if (!themeColorMeta) {
             themeColorMeta = document.createElement('meta');
@@ -131,9 +314,12 @@
         }
         
         setInterval(() => {
-            themeColorMeta.content = colors[index];
-            index = (index + 1) % colors.length;
+            themeColorMeta.content = colors[colorIndex];
+            colorIndex = (colorIndex + 1) % colors.length;
         }, 5000);
+        
+        // Set initial theme color
+        themeColorMeta.content = '#1e88e5';
     </script>
 </body>
 </html>

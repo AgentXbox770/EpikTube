@@ -40,7 +40,6 @@
             width: 100%;
         }
 
-        /* Logo - SAME SIZE AS THE BOX (full width) */
         .logo-wrapper {
             width: 100%;
             margin-bottom: 20px;
@@ -52,7 +51,6 @@
             display: block;
         }
 
-        /* BitView-style box */
         .bitview-box {
             background: white;
             border: 1px solid #d0d0d0;
@@ -79,7 +77,6 @@
             line-height: 1.5;
         }
 
-        /* Error state styles */
         .error-title {
             font-size: 48px;
             font-weight: bold;
@@ -94,7 +91,6 @@
             line-height: 1.5;
         }
 
-        /* Footer */
         .footer {
             margin-top: 30px;
             font-size: 14px;
@@ -123,45 +119,50 @@
 </head>
 <body>
     <div class="container">
-        <!-- Logo - full width same as box -->
         <div class="logo-wrapper">
             <img class="logo" src="logo.ico" alt="FlowTube Logo" onerror="this.style.display='none'">
         </div>
         
-        <!-- BitView-style box (content will be updated by JS) -->
         <div id="mainBox" class="bitview-box">
             <h1>FlowTube</h1>
             <div class="maintenance-text">Loading...</div>
         </div>
         
-        <!-- Footer -->
         <div id="footer" class="footer">
             If you are a PC user, add it as an app :)
         </div>
     </div>
     
     <script>
-        // Function to show error state (404)
+        // Flag to prevent multiple completions
+        let finished = false;
+
+        // Show error state (404)
         function showError(error) {
+            if (finished) return;
+            finished = true;
+            
             const box = document.getElementById('mainBox');
             const footer = document.getElementById('footer');
             
-            // Log the actual error to console (no editing)
+            // Log the actual error to console (unedited)
             console.error(error);
             
-            // Change box content to 404 error
             box.innerHTML = `
                 <div class="error-title">404</div>
                 <div class="error-text">Something went wrong while loading videos. Try again later :(</div>
             `;
             
-            // Update footer with the actual error message (no editing)
-            footer.innerHTML = `${error.message`};
+            // Footer shows only the raw error message (no prefix)
+            footer.innerHTML = (error && error.message) ? error.message : String(error);
             footer.classList.add('footer-error');
         }
         
-        // Function to show normal/success state
+        // Show normal state
         function showNormal() {
+            if (finished) return;
+            finished = true;
+            
             const box = document.getElementById('mainBox');
             const footer = document.getElementById('footer');
             
@@ -174,50 +175,57 @@
             footer.classList.remove('footer-error');
         }
         
-        // Firebase configuration (fake / invalid)
+        // Firebase configuration
         const firebaseConfig = {
-    apiKey: "AIzaSyBVGKAiyIKTZpehtzVwhP4qQhzI447hiZw",
-    authDomain: "flowtube-305a1.firebaseapp.com",
-    databaseURL: "https://flowtube-305a1-default-rtdb.firebaseio.com",
-    projectId: "flowtube-305a1",
-    storageBucket: "flowtube-305a1.firebasestorage.app",
-    messagingSenderId: "864327459818",
-    appId: "1:864327459818:web:641dc04dbdd369068d8893"
-  };
+            apiKey: "AIzaSyBVGKAiyIKTZpehtzVwhP4qQhzI447hiZw",
+            authDomain: "flowtube-305a1.firebaseapp.com",
+            databaseURL: "https://flowtube-305a1-default-rtdb.firebaseio.com",
+            projectId: "flowtube-305a1",
+            storageBucket: "flowtube-305a1.firebasestorage.app",
+            messagingSenderId: "864327459818",
+            appId: "1:864327459818:web:641dc04dbdd369068d8893"
+        };
         
-        // Load Firebase and verify it works by performing a dummy Firestore operation
-        async function initFirebase() {
-            // Helper to load scripts
-            function loadScript(src) {
-                return new Promise((resolve, reject) => {
-                    const script = document.createElement('script');
-                    script.src = src;
-                    script.onload = resolve;
-                    script.onerror = () => reject(new Error(`Failed to load script: ${src}`));
-                    document.head.appendChild(script);
-                });
+        // Helper to load scripts
+        function loadScript(src) {
+            return new Promise((resolve, reject) => {
+                const script = document.createElement('script');
+                script.src = src;
+                script.onload = resolve;
+                script.onerror = () => reject(new Error(`Failed to load script: ${src}`));
+                document.head.appendChild(script);
+            });
+        }
+        
+        // Timeout: if not finished after 4 seconds, show error with timeout message
+        const timeoutId = setTimeout(() => {
+            if (!finished) {
+                showError(new Error('Timeout after 4 seconds'));
             }
-            
+        }, 4000);
+        
+        // Initialize Firebase
+        async function initFirebase() {
             try {
-                // 1. Load Firebase core and Firestore
+                // Load Firebase core and Firestore
                 await loadScript('https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js');
                 await loadScript('https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js');
                 
-                // 2. Initialize with our config
+                // Initialize app
                 const app = firebase.initializeApp(firebaseConfig);
-                
-                // 3. Try to use Firestore – this will fail if config is invalid
                 const db = firebase.firestore();
-                // Perform a dummy read to force Firebase to validate the config
+                
+                // Dummy operation to verify connectivity
                 await db.collection('_dummy_').limit(1).get();
                 
-                // If we got here, Firebase is working
-                console.log('Firebase loaded and operational');  // Keep it simple, no custom prefix
+                // If we get here, Firebase is working
+                clearTimeout(timeoutId);
                 showNormal();
             } catch (err) {
-                // Any error (loading scripts, init, Firestore operation) triggers 404
-                // Pass the original error object to showError (no editing)
-                showError(err);
+                clearTimeout(timeoutId);
+                if (!finished) {
+                    showError(err);
+                }
             }
         }
         
@@ -225,7 +233,7 @@
         initFirebase();
         
         // Address bar color changer (purple and blue every 5 seconds)
-        const colors = ['#9b59b6', '#1e88e5']; // Purple, Blue
+        const colors = ['#9b59b6', '#1e88e5'];
         let colorIndex = 0;
         
         let themeColorMeta = document.querySelector('meta[name="theme-color"]');
@@ -240,8 +248,7 @@
             colorIndex = (colorIndex + 1) % colors.length;
         }, 5000);
         
-        // Set initial theme color
         themeColorMeta.content = '#1e88e5';
     </script>
 </body>
-    </html>
+</html>

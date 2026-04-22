@@ -3,35 +3,125 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    
-    <meta property="og:title" content="FlowTube">
-    <meta property="og:description" content="Grow views, be better.">
-    <meta property="og:type" content="website">
-
     <title>FlowTube!</title>
-    
     <link rel="icon" href="logo.ico" type="image/x-icon">
-
     <style>
         body {
             margin: 0;
             padding: 0;
             background-color: #f0f0f0;
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 12px;
+        }
+
+        .top-links {
+            text-align: right;
+            padding: 5px 10px;
+            color: #0033CC;
+        }
+        .top-links a {
+            color: #0033CC;
+            text-decoration: underline;
+        }
+
+        .header-main {
+            display: flex;
+            align-items: center;
+            padding: 0 15px;
         }
 
         .logo {
-            position: absolute;
-            top: 0;
-            left: 0;
-            padding: 15px;
-            width: 180px; 
+            width: 150px;
             height: auto;
+        }
+
+        .slogan {
+            font-style: italic;
+            color: #666;
+            margin-left: 10px;
+            font-size: 13px;
+        }
+
+        .nav-tabs {
+            display: flex;
+            gap: 5px;
+            padding: 10px 15px 0 15px;
+        }
+
+        .tab {
+            padding: 6px 20px;
+            border: 1px solid #999;
+            border-bottom: none;
+            border-radius: 8px 8px 0 0;
+            font-weight: bold;
+            text-decoration: none;
+            color: #0033CC;
+            background: linear-gradient(to bottom, #d5e5ff, #abc9ff);
+        }
+
+        .tab.active {
+            background: #e5e5e5;
+            color: #000;
+        }
+
+        .filter-bar {
+            background-color: #e5e5e5;
+            border: 1px solid #ccc;
+            padding: 5px;
+            margin: 0 15px;
+            text-align: center;
+            color: #333;
+        }
+        .filter-bar a {
+            color: #0033CC;
+            text-decoration: underline;
+            margin: 0 5px;
+        }
+
+        .search-section {
+            text-align: center;
+            margin-top: 15px;
+        }
+        .search-input {
+            width: 350px;
+            padding: 3px;
+            border: 1px solid #7f9db9;
+            color: #ff0000;
+            font-weight: bold;
+        }
+        .search-btn {
+            padding: 2px 10px;
+            background-color: #eee;
+            border: 1px solid #666;
+            cursor: pointer;
         }
     </style>
 </head>
 <body>
 
-    <img src="texture/logo_title.webp" class="logo" alt="FlowTube Logo">
+    <div class="top-links">
+        <a href="#">Sign Up</a> | <a href="#">Log In</a> | <a href="#">Help</a>
+    </div>
 
+    <div class="header-main">
+        <img src="texture/logo_title.webp" class="logo">
+        <span class="slogan">Upload, tag and share your videos worldwide!</span>
+    </div>
+
+    <div class="nav-tabs">
+        <a href="#" class="tab">Home</a>
+        <a href="#" class="tab active">Watch Videos</a>
+        <a href="#" class="tab">Upload Videos</a>
+        <a href="#" class="tab">Invite Friends</a>
+    </div>
+
+    <div class="filter-bar">
+        <a href="#">Most Recent</a> | <a href="#">Most Popular</a> | <a href="#">Most Discussed</a> | <a href="#">Top Favorites</a> | <a href="#">Top Rated</a> | <a href="#">Recently Featured</a> | <a href="#">Random</a>
+    </div>
+
+    <div class="search-section">
+        <input type="text" class="search-input" value="How to flowtube">
+        <button class="search-btn">Search Videos</button>
+    </div>
 </body>
 </html>
